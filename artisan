@@ -1,0 +1,24 @@
+#! /usr/bin/env bash
+
+if [[ -f docker-compose.yml ]]; then
+    docker compose exec php ./artisan "$@"
+    exit
+fi
+
+if [[ -f .env ]]; then
+    source .env
+fi
+
+if [[ -z "$COMPOSER_IMAGE" ]]; then
+	COMPOSER_IMAGE=composer
+fi
+
+test -t 1 && USE_TTY="--tty"
+
+docker run --rm --interactive ${USE_TTY} \
+    --user `id -u`:`id -g` \
+    --volume "$PWD":/app \
+    --volume composer:/tmp/.composer \
+    --workdir /app \
+    --env COMPOSER_HOME=/tmp/.composer \
+    ${COMPOSER_IMAGE} artisan "$@"
